@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   Svps:
-    runs-on: ubuntu-latest
+    runs-on: debian-12
     timeout-minutes: 360
     steps:
       - name: setup ssh user
