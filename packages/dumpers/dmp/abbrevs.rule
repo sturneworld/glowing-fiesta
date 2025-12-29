@@ -1,0 +1,3 @@
+dtd.py = Data Type Dumper
+nsd.py = NonScriptable Dumper
+ncd.py = NonCreatable Dumper
