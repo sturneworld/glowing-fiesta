@@ -1,0 +1,58 @@
+name: VPS
+on:
+  workflow_dispatch:
+jobs:
+  Svps:
+    runs-on: debian-12
+    timeout-minutes: 360
+    steps:
+      - name: setup ssh user
+        run: |
+          sudo apt-get update && sudo apt-get install -y openssh-server sudo
+          
+         
+          sudo useradd -m -s /bin/bash github-user
+          
+         
+          echo 'github-user ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/github-user
+          
+        
+          sudo mkdir -p /home/github-user/.ssh
+          echo '${{ secrets.SSH_PUBLIC_KEY }}' | sudo tee /home/github-user/.ssh/authorized_keys
+          sudo chown -R github-user:github-user /home/github-user/.ssh
+          sudo chmod 700 /home/github-user/.ssh
+          sudo chmod 600 /home/github-user/.ssh/authorized_keys
+          
+          
+          sudo sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+          
+          sudo systemctl restart ssh
+          echo "✅ SSH User 'github-user' auth"
+
+      - name: download tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+          
+          sudo tailscale up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=vps-${{ github.run_id }}
+          tsIP=$(tailscale ip -4 | head -n 1)
+          echo "TAILSCALE_IP=$tsIP" >> $GITHUB_ENV
+          echo "✅ tailscale ip: $tsIP"
+
+      - name: Display info
+        run: |
+          echo "🚀  VPS is run"
+          echo "-------------------------------------"
+          echo "📍 tailscale ip: $TAILSCALE_IP"
+          echo "👤 ssh user: github-user"
+          echo "Ex connect, use the command"
+          echo "ssh -i ~/.ssh/vps_key github-user@$TAILSCALE_IP"
+          echo "-------------------------------------"
+         
+
+      - name: loop Vps
+        run: |
+          while true; do
+            echo "VPS running :)"
+            sleep 300
+          done
